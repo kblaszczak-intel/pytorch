@@ -1566,7 +1566,7 @@ if(MSVC)
   set(sleef_BINARY_DIR ${CMAKE_BINARY_DIR}/sleef/build)
   set(sleef_SOURCE_DIR ${CMAKE_BINARY_DIR}/sleef/)
 
-  add_subdirectory("${TORCH_ROOT}/third_party/sleef_fork" ${CMAKE_BINARY_DIR}/sleef)
+  add_subdirectory("${TORCH_ROOT}/third_party/sleef_fork" ${CMAKE_BINARY_DIR}/sleef EXCLUDE_FROM_ALL)
   include_directories(${CMAKE_BINARY_DIR}/sleef/build/include)
   link_directories(${CMAKE_BINARY_DIR}/sleef/lib)
   target_link_libraries(torch_cpu PUBLIC ${CMAKE_BINARY_DIR}/sleef/lib/sleef.lib)
