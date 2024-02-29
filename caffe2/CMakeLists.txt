@@ -1528,50 +1528,8 @@ if(MSVC AND BUILD_SHARED_LIBS)
   target_compile_options(torch_cpu PRIVATE "-DONNX_BUILD_MAIN_LIB")
 endif()
 
-if(MSVC AND 0)
-  # CMAKE_CXX_FLAGS and CMAKE_C_FLAGS are shared between all CMake project and
-  # its sub-modules. sleef build will modify the CMAKE_CXX_FLAGS and CMAKE_C_FLAGS.
-  # Sleef lib need build as static lib and it will make pytorch caused the link
-  # conflict between /MD and /MT.
-  # So, I split the sleef build to sub-process, and make it isolated to pytorch build.
-  # TODO: Optimize CMake build @ sleef, and add sleef as submodule.
-  set(PARALLEL_ARGS)
-  include(ProcessorCount)
-  ProcessorCount(N)
-  if(NOT N EQUAL 0)
-    set(PARALLEL_ARGS -j${N})
-  endif()
-
-  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/sleef)
-  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/sleef/include)
-  add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/sleef/lib/sleef.lib
-    COMMAND ${CMAKE_COMMAND} -S ${TORCH_ROOT}/third_party/sleef -GNinja -DBUILD_SHARED_LIBS=OFF -DBUILD_DFT=OFF -DBUILD_GNUABI_LIBS=OFF -DBUILD_TESTS=OFF
-    COMMAND ${CMAKE_COMMAND} --build . ${PARALLEL_ARGS}
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/sleef
-    COMMENT "Build sleef library."
-  )
-  add_custom_target(sleef ALL DEPENDS ${CMAKE_BINARY_DIR}/sleef/lib/sleef.lib)
-
-  include_directories(${CMAKE_BINARY_DIR}/sleef/include)
-  target_link_libraries(torch_cpu PUBLIC ${CMAKE_BINARY_DIR}/sleef/lib/sleef.lib)
-  add_dependencies(torch_cpu sleef)
-endif()
-
-if(MSVC AND 0)
-  set(SLEEF_BUILD_SHARED_LIBS OFF CACHE BOOL "Build sleef static" FORCE)
-  set(SLEEF_BUILD_DFT OFF CACHE BOOL "Don't build sleef DFT lib" FORCE)
-  set(SLEEF_BUILD_GNUABI_LIBS OFF CACHE BOOL "Don't build sleef gnuabi libs" FORCE)
-  set(SLEEF_BUILD_TESTS OFF CACHE BOOL "Don't build sleef tests" FORCE)
-  set(SLEEF_BUILD_SCALAR_LIB OFF CACHE BOOL "libsleefscalar will be built." FORCE)
-
-  add_subdirectory("${TORCH_ROOT}/third_party/sleef_fork" ${CMAKE_BINARY_DIR}/sleef)
-  include_directories(${CMAKE_BINARY_DIR}/include)
-  link_directories(${CMAKE_BINARY_DIR}/sleef/lib)
-  target_link_libraries(torch_cpu PUBLIC sleef)
-endif()
-
 if(MSVC)
-  target_link_libraries(torch_cpu PUBLIC ${CMAKE_BINARY_DIR}/sleef/lib/sleef.lib)
+  target_link_libraries(torch_cpu PRIVATE sleef)
 endif()
 
 caffe2_interface_library(torch_cpu torch_cpu_library)
@@ -1810,7 +1768,7 @@ if(BUILD_TEST)
           endif()
         else()
           add_executable(${test_name}_${CPU_CAPABILITY} "${test_src}")
-          target_link_libraries(${test_name}_${CPU_CAPABILITY} torch_library gtest_main)
+          target_link_libraries(${test_name}_${CPU_CAPABILITY} torch_library sleef gtest_main)
         endif()
         target_include_directories(${test_name}_${CPU_CAPABILITY} PRIVATE $<INSTALL_INTERFACE:include>)
         target_include_directories(${test_name}_${CPU_CAPABILITY} PRIVATE $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>)
