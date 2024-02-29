@@ -267,12 +267,12 @@ public:
     return b;
   }
 
-#ifdef _MSC_VER
-#define TORCH_SLEEF_CONST
+#if (defined(__GNUC__) || defined(__CLANG__)) && !defined(__INTEL_COMPILER)
+#define TORCH_SLEEF_CONST const
 #else
 #define TORCH_SLEEF_CONST
 #endif
-  Vectorized<T> map(TORCH_SLEEF_CONST __m256 (*TORCH_SLEEF_CONST vop)(__m256)) const {
+  Vectorized<T> map(TORCH_SLEEF_CONST __m256 (*vop)(__m256)) const {
     __m256 lo, hi;
     cvt_to_fp32<T>(values, lo, hi);
     const auto o1 = vop(lo);
