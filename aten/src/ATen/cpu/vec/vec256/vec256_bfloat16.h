@@ -267,10 +267,10 @@ public:
     return b;
   }
 
-#if (defined(__GNUC__) || defined(__CLANG__)) && !defined(__INTEL_COMPILER)
-#define TORCH_SLEEF_CONST const
-#else
+#ifdef _MSC_VER
 #define TORCH_SLEEF_CONST
+#else
+#define TORCH_SLEEF_CONST const
 #endif
   Vectorized<T> map(TORCH_SLEEF_CONST __m256 (*vop)(__m256)) const {
     __m256 lo, hi;

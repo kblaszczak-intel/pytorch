@@ -345,10 +345,10 @@ public:
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wignored-qualifiers"
 
-#if (defined(__GNUC__) || defined(__CLANG__)) && !defined(__INTEL_COMPILER)
-#define TORCH_SLEEF_CONST const
-#else
+#ifdef _MSC_VER
 #define TORCH_SLEEF_CONST
+#else
+#define TORCH_SLEEF_CONST const
 #endif
   Vectorized<T> map(TORCH_SLEEF_CONST __m512 (*vop)(__m512)) const {
     __m512 lo, hi;
