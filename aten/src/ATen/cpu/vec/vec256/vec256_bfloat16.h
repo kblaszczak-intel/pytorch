@@ -267,13 +267,6 @@ public:
     return b;
   }
 
-#if defined(_MSC_VER)
-#define TORCH_SLEEF_CONST
-#elif defined(__clang__)
-#define TORCH_SLEEF_CONST
-#else
-#define TORCH_SLEEF_CONST const
-#endif
   Vectorized<T> map(SLEEF_CONST __m256 (*vop)(__m256)) const {
     __m256 lo, hi;
     cvt_to_fp32<T>(values, lo, hi);
