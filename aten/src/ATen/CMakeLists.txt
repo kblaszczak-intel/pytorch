@@ -420,11 +420,11 @@ if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(s390x|ppc64le)$")
 endif()
 
 if(NOT EMSCRIPTEN AND NOT INTERN_BUILD_MOBILE)
-  # Bump up optimization level for sleef to -O1, since at -O0 the compiler
-  # excessively spills intermediate vector registers to the stack
-  # and makes things run impossibly slowly
-  set(OLD_CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
   if(NOT MSVC)
+    # Bump up optimization level for sleef to -O1, since at -O0 the compiler
+    # excessively spills intermediate vector registers to the stack
+    # and makes things run impossibly slowly
+    set(OLD_CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
     if(${CMAKE_C_FLAGS_DEBUG} MATCHES "-O0")
       string(REGEX REPLACE "-O0" "-O1" CMAKE_C_FLAGS_DEBUG ${OLD_CMAKE_C_FLAGS_DEBUG})
     else()
@@ -458,6 +458,10 @@ if(NOT EMSCRIPTEN AND NOT INTERN_BUILD_MOBILE)
     set_target_properties(sleef PROPERTIES IMPORTED_LOCATION "${SLEEF_LIBRARY}")
   endif()
   list(APPEND ATen_CPU_DEPENDENCY_LIBS sleef)
+
+  if(NOT MSVC)
+    set(CMAKE_C_FLAGS_DEBUG ${OLD_CMAKE_C_FLAGS_DEBUG})
+  endif()
 endif()
 
 if(USE_CUDA AND NOT USE_ROCM)
