@@ -631,6 +631,44 @@ class TestDecomp(TestCase):
         res = torch._decomp.decompositions.native_batch_norm(input, weight, bias, mean, var, False, 1, 1e-05)
         self.assertEqual(shape, res[0].shape)
 
+    def test_arange_graph(self, device):
+        from torch.fx.experimental.proxy_tensor import make_fx
+
+        def func(x, start):
+            le = x.shape[-1]
+            if start is None:
+                a = torch.arange(le, dtype=torch.float32)
+            else:
+                a = torch.arange(start, le, dtype=torch.float32)
+            return a
+
+        cfunc = make_fx(func, decomposition_table=decomposition_table)
+        fx_g = cfunc(torch.rand(10, device=device), None)
+
+        nodes_names = [n.name for n in fx_g.graph.nodes]
+        self.assertTrue("iota" in nodes_names)
+        self.assertTrue("convert_element_type" in nodes_names)
+        self.assertFalse("add" in nodes_names)
+        self.assertFalse("mul" in nodes_names)
+        self.assertFalse("convert_element_type_1" in nodes_names)
+
+        fx_g = cfunc(torch.rand(10, device=device), 1)
+        nodes_names = [n.name for n in fx_g.graph.nodes]
+        self.assertTrue("iota" in nodes_names)
+        self.assertTrue("convert_element_type" in nodes_names)
+        self.assertTrue("add" in nodes_names)
+        self.assertFalse("mul" in nodes_names)
+        self.assertFalse("convert_element_type_1" in nodes_names)
+
+        fx_g = cfunc(torch.rand(10, device=device), -1.0)
+        nodes_names = [n.name for n in fx_g.graph.nodes]
+        self.assertTrue("iota" in nodes_names)
+        self.assertTrue("convert_element_type" in nodes_names)
+        self.assertTrue("add" in nodes_names)
+        self.assertTrue("mul" in nodes_names)
+        self.assertTrue("convert_element_type_1" in nodes_names)
+
+
     class DecompCrossRefMode(TorchDispatchMode):
         def __init__(self, test_case, saved_precision, saved_rel_tol, dtype, run_all):
             self.test_case = test_case
