@@ -345,12 +345,14 @@ public:
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wignored-qualifiers"
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
+#define TORCH_SLEEF_CONST
+#elif defined(__clang__)
 #define TORCH_SLEEF_CONST
 #else
 #define TORCH_SLEEF_CONST const
 #endif
-  Vectorized<T> map(TORCH_SLEEF_CONST __m512 (*vop)(__m512)) const {
+  Vectorized<T> map(SLEEF_CONST __m512 (*vop)(__m512)) const {
     __m512 lo, hi;
     cvt_to_fp32<T>(values, lo, hi);
     const auto o1 = vop(lo);
