@@ -647,17 +647,17 @@ class TestDecomp(TestCase):
 
         nodes_names = [n.name for n in fx_g.graph.nodes]
         self.assertTrue("iota" in nodes_names)
+        self.assertTrue("add" in nodes_names)
+        self.assertTrue("mul" in nodes_names)
         self.assertTrue("convert_element_type" in nodes_names)
-        self.assertFalse("add" in nodes_names)
-        self.assertFalse("mul" in nodes_names)
         self.assertFalse("convert_element_type_1" in nodes_names)
 
         fx_g = cfunc(torch.rand(10, device=device), 1)
         nodes_names = [n.name for n in fx_g.graph.nodes]
         self.assertTrue("iota" in nodes_names)
-        self.assertTrue("convert_element_type" in nodes_names)
         self.assertTrue("add" in nodes_names)
-        self.assertFalse("mul" in nodes_names)
+        self.assertTrue("mul" in nodes_names)
+        self.assertTrue("convert_element_type" in nodes_names)
         self.assertFalse("convert_element_type_1" in nodes_names)
 
         fx_g = cfunc(torch.rand(10, device=device), -1.0)

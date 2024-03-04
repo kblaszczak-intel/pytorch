@@ -4972,13 +4972,11 @@ def arange(
         requires_grad=False,
     )
 
-    if integer_args:
-        result = index if step == 1 else step * index
-        result = result if start == 0 else start + result
-    else:
-        computation_dtype = utils.get_acc_type(dtype, device)
-        index = _maybe_convert_to_dtype(index, computation_dtype)
-        result = start + step * index
+    computation_dtype = (
+        torch.long if integer_args else utils.get_acc_type(dtype, device)
+    )
+    index = _maybe_convert_to_dtype(index, computation_dtype)
+    result = start + step * index
     result = _maybe_convert_to_dtype(result, dtype)
 
     if requires_grad:
