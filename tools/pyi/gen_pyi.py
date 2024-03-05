@@ -799,6 +799,12 @@ def gen_pyi(
                 "def _functionalize_are_all_mutations_under_no_grad_or_inference_mode(t: Tensor) -> _bool: ..."
             ],
             "_functionalize_sync": ["def _functionalize_sync(t: Tensor) -> None: ..."],
+            "_functionalize_apply_view_metas": [
+                "def _functionalize_apply_view_metas(tensor: Tensor, base: Tensor) -> Tensor: ..."
+            ],
+            "_functionalize_base": [
+                "def _functionalize_base(tensor: Tensor) -> Tensor: ..."
+            ],
             "_enable_functionalization": [
                 "def _enable_functionalization(*, reapply_views: _bool = False): ..."
             ],

@@ -54,6 +54,23 @@ OutputType = Enum(
 )
 
 
+# Wrapper around a FunctionalTensorWrapper for comparing only the resulting metadata
+# after applying all the ViewMeta operations.
+class FunctionalTensorMetadataEq:
+    def __init__(self, tensor: torch.Tensor) -> None:
+        assert torch._is_functional_tensor(tensor)
+        self.tensor = tensor
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, FunctionalTensorMetadataEq):
+            return NotImplemented
+        return (
+            self.tensor.shape == other.tensor.shape
+            and self.tensor.stride() == other.tensor.stride()
+            and self.tensor.storage_offset() == other.tensor.storage_offset()
+        )
+
+
 # This class stores info about every user output.
 @dataclass(frozen=True)
 class OutputAliasInfo:
@@ -84,6 +101,9 @@ class OutputAliasInfo:
     dynamic_dims: Optional[Set[int]]
     # requires_grad
     requires_grad: bool
+    # FunctionalTensorWrapper that represents this output.
+    # Provides us the means to replay views from it.
+    functional_tensor: Optional[FunctionalTensorMetadataEq] = None
 
 
 class MutationType(Enum):

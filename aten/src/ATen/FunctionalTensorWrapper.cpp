@@ -328,17 +328,33 @@ void FunctionalTensorWrapper::sync_() {
   regenerate_from_base();
 }
 
-void FunctionalTensorWrapper::regenerate_from_base() {
-  at::AutoDispatchSkipFunctionalize guard;
+Tensor FunctionalTensorWrapper::base() {
   auto storage_impl = functional_storage_impl();
-  auto t = storage_impl->base();
-  TORCH_INTERNAL_ASSERT(!at::functionalization::impl::isFunctionalTensor(t));
+  return storage_impl->base();
+}
+
+Tensor FunctionalTensorWrapper::apply_view_metas(const Tensor& base) {
+  auto t = base;
+
   // Reapply views to get the viewed tensor from the base in alias_
-  for (auto& view_meta: view_metas_) {
+  for (auto& view_meta : view_metas_) {
     t = view_meta.forward_fn(t, view_meta.out_index);
   }
+
+  return t;
+}
+
+void FunctionalTensorWrapper::regenerate_from_base() {
+  at::AutoDispatchSkipFunctionalize guard;
+  auto t = base();
+
   TORCH_INTERNAL_ASSERT(!at::functionalization::impl::isFunctionalTensor(t));
+  t = apply_view_metas(t);
+  TORCH_INTERNAL_ASSERT(!at::functionalization::impl::isFunctionalTensor(t));
+
   replace_(t);
+
+  auto storage_impl = functional_storage_impl();
   generation_ = storage_impl->generation();
 }
 
