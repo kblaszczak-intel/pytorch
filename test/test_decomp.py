@@ -637,36 +637,33 @@ class TestDecomp(TestCase):
         def func(x, start):
             le = x.shape[-1]
             if start is None:
-                a = torch.arange(le, dtype=torch.float32)
+                a = torch.arange(le, dtype=torch.float32, device=x.device)
             else:
-                a = torch.arange(start, le, dtype=torch.float32)
+                a = torch.arange(start, le, dtype=torch.float32, device=x.device)
             return a
 
         cfunc = make_fx(func, decomposition_table=decomposition_table)
         fx_g = cfunc(torch.rand(10, device=device), None)
-
-        nodes_names = [n.name for n in fx_g.graph.nodes]
-        self.assertTrue("iota" in nodes_names)
-        self.assertTrue("add" in nodes_names)
-        self.assertTrue("mul" in nodes_names)
-        self.assertTrue("convert_element_type" in nodes_names)
-        self.assertFalse("convert_element_type_1" in nodes_names)
+        iota_str = "iota = torch.ops.prims.iota.default(10, start = 0, step = 1, " \
+            f"dtype = torch.int64, device = {repr(torch.device(device))}, requires_grad = False)"
+        self.assertExpectedInline(fx_g.code.strip(), f"""\
+def forward(self, x_1, start_1):
+    {iota_str}
+    mul = torch.ops.prims.mul.default(iota, 1);  iota = None
+    add = torch.ops.prims.add.default(mul, 0);  mul = None
+    convert_element_type = torch.ops.prims.convert_element_type.default(add, torch.float32);  add = None
+    return convert_element_type""")
 
         fx_g = cfunc(torch.rand(10, device=device), 1)
-        nodes_names = [n.name for n in fx_g.graph.nodes]
-        self.assertTrue("iota" in nodes_names)
-        self.assertTrue("add" in nodes_names)
-        self.assertTrue("mul" in nodes_names)
-        self.assertTrue("convert_element_type" in nodes_names)
-        self.assertFalse("convert_element_type_1" in nodes_names)
-
-        fx_g = cfunc(torch.rand(10, device=device), -1.0)
-        nodes_names = [n.name for n in fx_g.graph.nodes]
-        self.assertTrue("iota" in nodes_names)
-        self.assertTrue("convert_element_type" in nodes_names)
-        self.assertTrue("add" in nodes_names)
-        self.assertTrue("mul" in nodes_names)
-        self.assertTrue("convert_element_type_1" in nodes_names)
+        iota_str = "iota = torch.ops.prims.iota.default(9, start = 0, step = 1, " \
+            f"dtype = torch.int64, device = {repr(torch.device(device))}, requires_grad = False)"
+        self.assertExpectedInline(fx_g.code.strip(), f"""\
+def forward(self, x_1, start_1):
+    {iota_str}
+    mul = torch.ops.prims.mul.default(iota, 1);  iota = None
+    add = torch.ops.prims.add.default(mul, 1);  mul = None
+    convert_element_type = torch.ops.prims.convert_element_type.default(add, torch.float32);  add = None
+    return convert_element_type""")
 
 
     class DecompCrossRefMode(TorchDispatchMode):
