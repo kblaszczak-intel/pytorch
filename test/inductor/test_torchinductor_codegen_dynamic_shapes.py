@@ -69,6 +69,7 @@ def check_codegen(
         example_inputs = tuple(copy_fn(x) for x in example_inputs)
 
     torch._dynamo.reset()
+    torch._inductor.codecache.FxGraphCache.clear()
     torch._inductor.metrics.reset()
 
     called = False

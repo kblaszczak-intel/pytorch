@@ -130,6 +130,9 @@ f32 = torch.float32
 i64 = torch.int64
 i32 = torch.int32
 
+# Test the FX graph code cache:
+config.fx_graph_cache = True
+
 
 def _large_cumprod_input(shape, dim, dtype, device):
     # Construct a cumprod input which guaruntees not to overflow or underflow
@@ -918,6 +921,7 @@ class CommonTemplate:
         )
         assertGeneratedKernelCountEqual(self, 1)
 
+    @config.patch({"fx_graph_cache": False})
     def test_forced_buffer_realize(self):
         # Test torch._test_inductor_realize forces a buffer to be realized
         def fn(a):
@@ -927,6 +931,7 @@ class CommonTemplate:
         self.common(fn, (torch.randn(10),))
         self.assertEqual(torch._inductor.metrics.ir_nodes_pre_fusion, 2)
 
+    @config.patch({"fx_graph_cache": False})
     def test_scheduler_vertical_fusion1(self):
         realize = test_operators.realize
 
@@ -8890,6 +8895,7 @@ class CommonTemplate:
         self.assertEqual(rot.grad, rot_e.grad)
         self.assertEqual(trans.grad, trans_e.grad)
 
+    @config.patch({"fx_graph_cache": False})
     def test_inner_fn_str_and_stride(self):
         def f(x):
             x = x + 1
